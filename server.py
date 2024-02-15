@@ -18,6 +18,13 @@ class irData(BaseModel):
     data: list
 
 
+class ObservedDevice(BaseModel):
+    id: str
+    name: str
+    ip: str
+    group: str
+
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -85,6 +92,22 @@ async def get_pc_info():
     }
 
 
+@app.post("/observed/add/")
+async def addObserved(addedData: ObservedDevice):
+    data = {
+        addedData.id: {
+            "id": str,
+            "name": str,
+            "ip": str,
+            "group": str
+        }
+    }
+    jsonDB.update_db("dataBase/observedDevice.json",
+                     "observed", {data: data.dict()})
+    return {"message": "added"}
+
+
+# 関数
 def get_cpu_temperature():
     result = subprocess.run(['/usr/bin/sensors'], stdout=subprocess.PIPE)
     output = result.stdout.decode()
