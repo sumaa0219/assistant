@@ -6,10 +6,19 @@ import json
 import jsonDB
 import subprocess
 import psutil
+import os
+import datetime
+import csv
 
 app = FastAPI()
 
 irjson = "irInfo.json"
+datajson = "dataBase/observedDevice.json"
+
+# auto create file
+if not os.path.exists(datajson):
+    with open(datajson, 'w') as f:
+        pass
 
 
 class irData(BaseModel):
@@ -23,6 +32,13 @@ class ObservedDevice(BaseModel):
     name: str
     ip: str
     group: str
+    type: str
+
+
+class checkData(BaseModel):
+    id: str
+    group: str
+    status: str
 
 
 @app.get("/")
@@ -92,19 +108,52 @@ async def get_pc_info():
     }
 
 
-@app.post("/observed/add/")
+@app.post("/observed/add")
 async def addObserved(addedData: ObservedDevice):
+    # Try to get the existing data
+    existing_data = jsonDB.read_db(datajson)
+
+    # Prepare the new data
     data = {
         addedData.id: {
-            "id": str,
-            "name": str,
-            "ip": str,
-            "group": str
+            "id": addedData.id,
+            "name": addedData.name,
+            "ip": addedData.ip,
+            "group": addedData.group,
+            "type": addedData.type
         }
     }
-    jsonDB.update_db("dataBase/observedDevice.json",
-                     "observed", {data: data.dict()})
+
+    # If the id already exists in the database, return a message
+    for x in existing_data:
+        # Check if the ID already exists
+        for y in existing_data[x]:
+            if addedData.id == y:
+                return {"message": "ID already exists"}
+
+    # If the group does not exist, create a new one
+    if addedData.group not in existing_data:
+        newdata = {addedData.group: data}
+        existing_data.update(newdata)
+        jsonDB.write_db(datajson, existing_data)
+    else:
+        update_data = existing_data[addedData.group]
+        update_data.update(data)
+        # If the group exists, update it
+        jsonDB.update_db(datajson, addedData.group, update_data)
+
     return {"message": "added"}
+
+
+@app.post("/observed/check")
+async def checkObserved(data: checkData):
+    if not os.path.exists(f"dataBase/{data.id}.csv"):
+        with open(f"dataBase/{data.id}.csv", 'w') as f:
+            pass
+
+    with open(f"dataBase/{data.id}.csv", 'a') as f:
+        writer = csv.writer(f)
+        writer.writerow([datetime.datetime.now(), data.status])
 
 
 # 関数
