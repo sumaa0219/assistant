@@ -4,10 +4,13 @@ import os
 from pydantic import BaseModel
 import datetime
 import csv
+import requests
+
 
 router = APIRouter()
 
-irjson = "irInfo.json"
+iotJson = "dataBase/lotDevice.json"
+irjson = "dataBase/irInfo.json"
 datajson = "dataBase/observedDevice.json"
 
 # auto create file
@@ -91,6 +94,7 @@ async def read():
 
 @router.post("/ir/add/{group}", tags=["observation", "ir"])
 async def add(irdata: irData, group: str):
+    # print(irdata)
     data = {
         irdata.id: {
             "name": irdata.name,
@@ -114,3 +118,31 @@ async def delete(group: str, id: str):
             return {"message": "id not found"}
     else:
         return {"message": "group not found"}
+
+
+@router.post("/resisterIP", tags=["observation", "iot"])
+async def resisterIP(data: dict):
+    jsonDB.update_db(iotJson, "device", data)
+    return 'OK', 200
+
+
+@router.get("/getIotData", tags=["observation", "iot"])
+async def getIotData():
+    data = jsonDB.read_db(iotJson)
+    return data
+
+
+@router.get("/check", tags=["observation", "iot"])
+async def check():
+    return 'OK', 200
+
+
+@router.get("/irSend/{group}/{id}", tags=["iot", "ir"])
+async def irSend(group: str, id: str):
+    data = jsonDB.read_db(irjson)
+    data = data[group][id]["data"]
+    deviceIP = jsonDB.read_db(iotJson)
+    deviceIP = deviceIP["device"]["roomRemote"]["ip"]
+    res = requests.post(f"http://{deviceIP}/irsend", json={"data": data})
+    if res.status_code == 200:
+        return {"message": "sent"}
