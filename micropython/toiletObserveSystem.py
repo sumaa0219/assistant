@@ -8,12 +8,13 @@ import time
 from machine import Pin
 
 
-#masterServerIP = "http://172.24.139.139:8000"
-masterServerIP = "https://sssumaa.com" # デバック
+# masterServerIP = "http://172.24.139.139:8000"
+masterServerIP = "https://sssumaa.com"  # デバック
 
 
 timecounter = 0
 activeFlag = False
+
 
 def connect(ip):
     print("resister")
@@ -21,12 +22,12 @@ def connect(ip):
     # レスポンスが成功した場合
     if response.status_code == 200:
         data = {
-            "id":"0001",
-            "name":"toiletSystem",
+            "id": "0001",
+            "name": "toiletSystem",
             "ip": ip,
-            "group":"MakuyamaHouse",
-            "type":"humanSensor"
-            }
+            "group": "MakuyamaHouse",
+            "type": "humanSensor"
+        }
         # JSONデータを処理
         print(data)
         # JSONデータをPOSTリクエストで送信
@@ -56,20 +57,20 @@ def connect(ip):
 ip = net.setup().AutoConnect()
 connect(ip)
 
- 
+
 while True:
     p0 = Pin(2, Pin.IN)
     if p0.value() == 1 and activeFlag == False:
         activeFlag = True
         data = {
-            "id":"0001",
-            "group":"MakuyamaHouse",
-            "status":"active"
-            }
+            "id": "0001",
+            "group": "MakuyamaHouse",
+            "status": "active"
+        }
         url = masterServerIP + "/observed/check"
         headers = {"Content-Type": "application/json"}
         responsee = urequests.post(url, data=json.dumps(data), headers=headers)
-        
+
         if responsee.status_code == 200:
             print("POSTリクエストが成功しました。")
             led.blink(3)
@@ -77,28 +78,27 @@ while True:
             led.on()
             print(responsee.content)
             print("POSTリクエストが失敗しました。ステータスコード:", responsee.status_code)
-        
+
         responsee.close()
-        
-        
+
     elif p0.value() == 1 and activeFlag == True:
         pass
-    
+
     if p0.value() == 0 and activeFlag == True:
         activeFlag = False
-        
-    
-    #print("Data Received")
+
+    # print("Data Received")
     if timecounter/10 == 60:
         response = urequests.get(masterServerIP + "/check")
         # レスポンスが成功した場合
         if response.status_code == 200:
             timecounter = 0
+            response.close()
         else:
             faildcounter = 0
             networkFlag = False
             while networkFlag == False or faildcounter < 6:
-                ip = web.setup().AutoConnect()
+                ip = net.setup().AutoConnect()
                 print(ip)
                 response = urequests.get(masterServerIP + "/check")
                 # レスポンスが成功した場合
@@ -106,10 +106,10 @@ while True:
                     networkFlag = True
                     faildcounter = 0
                     connect(ip)
+                    response.close()
                 else:
                     faildcounter += 1
-                
-            
+                    response.close()
+
     timecounter += 1
     time.sleep_ms(100)
-

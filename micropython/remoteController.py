@@ -8,12 +8,13 @@ import time
 from machine import Pin
 from UpyIrTx import UpyIrTx
 
-#masterServerIP = "http://172.24.139.139:8000"
-masterServerIP = "https://sssumaa.com" # デバック
+# masterServerIP = "http://172.24.139.139:8000"
+masterServerIP = "https://sssumaa.com"  # デバック
 tx_pin = Pin(25, Pin.OUT)  # Pin No.26
 tx = UpyIrTx(0, tx_pin)    # 0ch
 
 timecounter = 0
+
 
 def connect(ip):
     print("resister")
@@ -25,8 +26,8 @@ def connect(ip):
         data = data["device"]
         new_data = {
             "ip": ip,
-            "status":""
-            }
+            "status": ""
+        }
         data["roomRemote"].update(new_data)
         # JSONデータを処理
         print(data)
@@ -52,23 +53,25 @@ def connect(ip):
     # リクエストの終了
     response.close()
 
+
 def parse_http_request(request):
     headers, body = request.split('\r\n\r\n', 1)
     return headers, body
+
 
 ip = net.setup().AutoConnect()
 connect(ip)
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('', 80))
 s.listen(5)
- 
+
 while True:
     conn, addr = s.accept()
     request = conn.recv(1024).decode('utf-8')
-    
+
     headers, body = parse_http_request(request)
-    print(headers,body)
-    #print(headers)
+    print(headers, body)
+    # print(headers)
     # POSTリクエストのボディを処理
     if "POST" in headers:
         if re.search(r'/irsend', headers.lower()) is not None:
@@ -85,9 +88,9 @@ while True:
  #           if cl:
 #                door.close()
 #                led.blink(3)
-    
+
     conn.close()
-    #print("Data Received")
+    # print("Data Received")
     if timecounter/10 == 60:
         response = urequests.get(masterServerIP + "/check")
         # レスポンスが成功した場合
@@ -97,7 +100,7 @@ while True:
             faildcounter = 0
             networkFlag = False
             while networkFlag == False or faildcounter < 6:
-                ip = web.setup().AutoConnect()
+                ip = net.setup().AutoConnect()
                 print(ip)
                 response = urequests.get(masterServerIP + "/check")
                 # レスポンスが成功した場合
@@ -107,8 +110,6 @@ while True:
                     connect(ip)
                 else:
                     faildcounter += 1
-                
-            
+
     timecounter += 1
     time.sleep_ms(100)
-
