@@ -13,6 +13,8 @@ iotJson = "dataBase/lotDevice.json"
 irjson = "dataBase/irInfo.json"
 datajson = "dataBase/observedDevice.json"
 
+activeTime = None
+
 # auto create file
 if not os.path.exists(datajson):
     with open(datajson, 'w') as f:
@@ -51,7 +53,8 @@ async def addObserved(addedData: ObservedDevice):
             "name": addedData.name,
             "ip": addedData.ip,
             "group": addedData.group,
-            "type": addedData.type
+            "type": addedData.type,
+            "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
     }
 
@@ -78,13 +81,22 @@ async def addObserved(addedData: ObservedDevice):
 
 @router.post("/observed/check", tags=["observation"])
 async def checkObserved(data: checkData):
+    global activeTime
     if not os.path.exists(f"dataBase/{data.id}.csv"):
         with open(f"dataBase/{data.id}.csv", 'w') as f:
             pass
 
-    with open(f"dataBase/{data.id}.csv", 'a') as f:
-        writer = csv.writer(f)
-        writer.writerow([datetime.datetime.now(), data.status])
+    if activeTime is None:
+        activeTime = datetime.datetime.now()
+        with open(f"dataBase/{data.id}.csv", 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow([datetime.datetime.now(), "firts check"])
+
+    if (datetime.datetime.now() - activeTime).seconds > 180:
+        activeTime = datetime.datetime.now()
+        with open(f"dataBase/{data.id}.csv", 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow([datetime.datetime.now(), data.status])
 
 
 @router.get("/ir/read", tags=["observation", "ir"])
