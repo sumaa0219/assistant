@@ -67,7 +67,7 @@ s.listen(5)
 
 while True:
     conn, addr = s.accept()
-    request = conn.recv(1024).decode('utf-8')
+    request = conn.recv(3072).decode('utf-8')
 
     headers, body = parse_http_request(request)
     print(headers, body)
