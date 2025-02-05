@@ -92,11 +92,11 @@ async def checkObserved(data: checkData):
             writer = csv.writer(f)
             writer.writerow([datetime.datetime.now(), "firts check"])
 
-    if (datetime.datetime.now() - activeTime).seconds > 180:
-        activeTime = datetime.datetime.now()
-        with open(f"dataBase/{data.id}.csv", 'a') as f:
-            writer = csv.writer(f)
-            writer.writerow([datetime.datetime.now(), data.status])
+    # if (datetime.datetime.now() - activeTime).seconds > 180:
+    activeTime = datetime.datetime.now()
+    with open(f"dataBase/{data.id}.csv", 'a') as f:
+        writer = csv.writer(f)
+        writer.writerow([datetime.datetime.now(), data.status])
 
 
 @router.get("/ir/read", tags=["observation", "ir"])
@@ -158,3 +158,9 @@ async def irSend(group: str, id: str):
     res = requests.post(f"http://{deviceIP}/irsend", json={"data": data})
     if res.status_code == 200:
         return {"message": "sent"}
+
+
+@router.get("/wakeonlan/{MAC}", tags=["iot", "pc"])
+async def wakePC(MAC: str):
+    os.system(f"/home/linuxbrew/.linuxbrew/bin/wakeonlan {MAC}")
+    return {"message": "sent"}

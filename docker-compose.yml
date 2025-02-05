@@ -1,0 +1,12 @@
+version: '3'
+services:
+  python:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: 'assistant'
+    working_dir: '/assistant'
+    tty: true
+    volumes:
+      - ./:/assistant
