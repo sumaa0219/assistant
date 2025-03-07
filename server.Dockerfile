@@ -10,15 +10,15 @@ ENV LC_ALL ja_JP.UTF-8
 ENV TZ JST-9
 ENV TERM xterm
 
-RUN apt install -y git gcc libasound2-dev
+RUN apt install -y git gcc libasound2-dev ethtool
 
 RUN mkdir -p /assistant
 COPY ./requirements.txt /assistant
-
 WORKDIR /assistant
-RUN pip install -r requirements.txt
+
 RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools
+RUN pip install -r requirements.txt
+EXPOSE 8000
 
-
-CMD ["python", "main.py"]
+CMD ["python", "server.py"]
